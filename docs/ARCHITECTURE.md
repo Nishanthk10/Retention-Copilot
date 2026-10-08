@@ -125,14 +125,20 @@ and produces evidence: evals, a harness ablation, execution logs, and a document
 - **Traces to:** Model experiment; benchmark; Interrogate constraint — zero cost.
 
 ### DEC-07 — Retry and provider failover
-- **Decided:** On a failed model call: Groq → Ollama → Gemini → back to Groq, up to 3 rounds
-  (max 9 attempts). Retries stop as soon as a new customer turn arrives. If all fail, the rep sees
-  "handle the call yourself until this is fixed." (D-11, D-24)
-- **Rationale:** You replaced the "defibrillator" idea with this because, by the time retries
-  finish, the conversation has moved on and the newest turn matters more.
-- **Alternatives rejected:** Same-provider retries — a provider outage defeats them;
-  process-restart "defibrillator" — more complex than needed for failed calls.
-- **Traces to:** Interrogate follow-up answers E, 4.
+- **Decided:** Each role has an ordered model chain: all Groq chat models first, then Ollama, then
+  Gemini. Offer and behaviour agents: gpt-oss-120b → qwen3.8-27b → gpt-oss-20b → Ollama → Gemini.
+  Summariser: gpt-oss-20b → qwen3.8-27b → gpt-oss-120b → Ollama → Gemini. One pass is a round; up to
+  3 rounds. A model that returns 429 is put in cooldown (from Groq's retry-after / reset headers) and
+  skipped until it recovers. Retries stop as soon as a new customer turn arrives. If all fail, the rep
+  sees "handle the call yourself until this is fixed." Prompt Guard and gpt-oss-safeguard-20b are never
+  used as fallbacks. (D-11, D-24, D-52)
+- **Rationale:** Groq rate limits are separate per model, so falling back across Groq models uses
+  fresh allowances before leaving Groq; Groq-first keeps the fastest providers in front. By the time
+  retries finish the conversation has moved on, so the newest turn matters more.
+- **Alternatives rejected:** Groq → Ollama → Gemini with one Groq model — a 429 on that model sends
+  every call to slower local inference; same-model retries — a rate limit or outage defeats them;
+  process-restart "defibrillator" — more complex than needed.
+- **Traces to:** Interrogate follow-up answers E, 4; Groq per-model rate limits.
 
 ### DEC-08 — Timing without latency budgets
 - **Decided:** No latency budget in seconds. A slow-lane result is dropped if the next turn has
@@ -322,7 +328,7 @@ Verdicts are **proposed**; confirm or overturn each.
 ## 4. Key risks
 | Risk | Mitigation |
 |---|---|
-| Free-tier rate limits with three agents per turn and 75 ablation runs | Per-model limits; summariser on 20b; Ollama fallback for ablation |
+| Free-tier rate limits: gpt-oss-120b is 8K tokens/min shared by two agents; 200K tokens/day per model | Groq-first chains across three models with cooldowns (DEC-07); ablation runs on Ollama |
 | Summary poisoning via customer speech | DEC-10 guardrails; DEC-22 attack test |
 | STT dominates latency (~2.3–2.4 s measured with batch Whisper) | Streaming STT; fast lane bridges the gap |
 | Crash resume depends on browser reconnect, STT restart and an intact checkpoint | Kill-mid-call test; fallback to ending assist |

@@ -23,6 +23,8 @@
 |---|---|---|---|
 | 2026-10-08 | — | Initial draft | Phase 1 UI Discovery |
 | 2026-10-08 | All TBDs | Default answers applied to G-1–G-15 | Unblock Phase 2/3; engineer confirms at sign-off |
+| 2026-10-08 | Live Call Assist; new Call Log List; Call Log Viewer | "See logs" button opens a list of past calls; selecting one opens the same Call Log Viewer shown at call end | Engineer request |
+| 2026-10-08 | Call Log List | Status comes from calls.db (status, created_at only); ended time from the log's call_ended record. New record states "Interrupted" and "Ended (time not recorded)" | Engineer decision during Task 6.2 |
 | 2026-10-08 | Global; Live Call Assist | G-1–G-4 confirmed; G-2 changed to a Retry connection button | Engineer answers |
 | 2026-10-08 | Live Call Assist | G-5–G-16 confirmed; G-7 adds a Replay test call control | Engineer answers |
 | 2026-10-08 | Live Call Assist; Customer Audio removed | Speaker role set by "Sales Rep" / "Customer" buttons on one mic (D-51); Customer Audio screen removed | Engineer decision on OQ-3 |
@@ -49,8 +51,8 @@
 - None (G-1, confirmed): the page opens directly. Logout, session expiry and login redirects N/A.
 
 ### Back Navigation
-- Mechanism: Explicit "Back to call screen" button on Call Log Viewer.
-- Screens with explicit back controls: Call Log Viewer → Live Call Assist.
+- Mechanism: Explicit back buttons.
+- Screens with explicit back controls: Call Log Viewer → Call Log List ("All logs") and → Live Call Assist ("Back to call screen"); Call Log List → Live Call Assist ("Back to call screen").
 
 ### Breadcrumbs
 - Present: N
@@ -78,6 +80,7 @@
 |---|---|---|---|---|---|
 | Live Call Assist | Dashboard | `/` | Handle a retention call with guidance | Sales rep | N |
 | Call Ended Card | Modal | (overlay on `/`) | Close out a call and reach its log | Sales rep | N |
+| Call Log List | List | `/logs` | Find a past call's log | Sales rep | N |
 | Call Log Viewer | Detail | `/logs/{call_id}` | Investigate what the copilot did on a call | Sales rep | N |
 
 Inventory checks:
@@ -121,6 +124,7 @@ Inventory checks:
 | Replay test call | Screen | Dropdown (S1–S5) + button | Status = Ready | Starts a call and streams the selected recording's utterances, each preceded by its role message, through the same /ws/audio path as the mic (INV-10); mic and role buttons disabled while replaying (G-7) |
 | Sales Rep | Screen | Toggle button | Status = Live | Mic streams tagged role=rep; if Customer was active, the customer turn closes (D-51, G-16) |
 | Customer | Screen | Toggle button | Status = Live | Mic streams tagged role=customer; if Sales Rep was active, the rep turn closes (D-51, G-16) |
+| See logs | Screen | Button (status bar) | Always | Opens Call Log List. When Status = Live it opens in a new browser tab so the call keeps running (G-17) |
 | End call | Screen | Button | Status = Live | Signals hang-up (G-6). Status → Ended; in-flight model calls dropped; Call Ended Card opens (D-27) |
 
 ### States
@@ -201,12 +205,55 @@ Inventory checks:
 
 ---
 
+## Call Log List
+**Type:** List
+**Route:** `/logs`
+**Journey:** Find a past call's log
+**Roles:** Sales rep
+**Trigger:** Live Call Assist — See logs
+**Auth required:** N
+
+### Data Displayed
+| Section | Entity / Field | Source | Notes |
+|---|---|---|---|
+| Main | Call.call_id, started_at, ended_at, status | GET /api/calls | Newest first. status and started_at from calls.db (status, created_at only; never the checkpoint column); ended_at from the log's call_ended record |
+| Main | Suggestions shown, Mask/Deny count | Derived from the call's log | Lets the rep spot calls where the Permission Layer intervened |
+
+### Actions
+| Label | Scope | Trigger | Condition | Outcome |
+|---|---|---|---|---|
+| Open | Row | Row click | Always | Navigate to Call Log Viewer for that call_id |
+| Back to call screen | Global | Button | Always | Navigate to Live Call Assist |
+
+### States
+| State | Trigger | What Renders |
+|---|---|---|
+| Loading | List request in progress | Spinner |
+| Empty | No calls logged yet | "No call logs yet" with Back to call screen |
+| Populated | Calls returned | Table of calls, newest first |
+| Error | List request failed | "Could not load call logs" with "Try again" |
+| Record-state variant | A call's status is Live and it is the current call | Row labelled "In progress"; its log shows records written so far |
+| Record-state variant | calls.db says Live but it is not the current call (restore failed), or the call has a log but no calls.db row and no call_ended record | Row labelled "Interrupted" |
+| Record-state variant | calls.db says Ended but the log has no call_ended record (log could not be saved, G-13) | Row labelled "Ended (time not recorded)" |
+
+### Async Behaviour
+- Pattern: Load-once
+- Scope: Whole screen
+
+### List Configuration
+- Columns: Call ID, Started, Ended (or "In progress" / "Interrupted" / "Ended (time not recorded)"), Suggestions shown, Mask/Deny
+- Sort: started_at descending (fixed)
+- Filters: none
+- Pagination: none (demo volumes)
+
+---
+
 ## Call Log Viewer
 **Type:** Detail
 **Route:** `/logs/{call_id}`
 **Journey:** Investigate what the copilot did on a call
 **Roles:** Sales rep (and judges during the demo)
-**Trigger:** Call Ended Card — Open log
+**Trigger:** Call Ended Card — Open log, or Call Log List — row click (same layout either way)
 **Auth required:** N
 
 ### Data Displayed
@@ -222,6 +269,7 @@ Inventory checks:
 | Label | Scope | Trigger | Condition | Outcome |
 |---|---|---|---|---|
 | Back to call screen | Global | Button | Always | Navigate to Live Call Assist |
+| All logs | Global | Button | Always | Navigate to Call Log List |
 | Download log | Screen | Button | Log exists | **N5:** needed, or is viewing enough? |
 
 ### States
@@ -241,3 +289,4 @@ Inventory checks:
 
 ## Consolidated Gap List
 All UI gaps G-1 – G-16 are closed (see header).
+- G-17 (default — confirm): during a live call, "See logs" opens in a new tab and the in-progress call's log shows the records written so far (load-once; reload to refresh).

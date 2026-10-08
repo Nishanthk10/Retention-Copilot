@@ -12,6 +12,7 @@ from app.kb.search import KnowledgeBase
 from app.stt.streaming import Transcriber
 from app.providers.router import ProviderRouter
 from app.graph.runner import Runtime
+from app.call_list import list_calls
 from app.ws import router, live
 
 @asynccontextmanager
@@ -81,10 +82,18 @@ async def scenarios():
         result.append({'id':scenario['id'],'title':scenario['title'],'recorded':recorded})
     return result
 
+@app.get('/api/calls')
+async def get_calls():
+    rt=runtime(); live_ids={cid for cid,c in rt.calls.items() if c['status']=='live'}
+    return await asyncio.to_thread(list_calls,rt.audit,rt.settings.data_dir/'calls.db',live_ids)
+
 @app.get('/api/logs/{cid}')
 async def get_log(cid:str):
     try: valid_id(cid); return runtime().audit.read(cid)
     except (ValueError,FileNotFoundError): raise HTTPException(404,'Log not found for this call')
+
+@app.get('/logs')
+async def logs_list_page(): return FileResponse(ROOT/'web/logs.html')
 
 @app.get('/logs/{cid}')
 async def logs_page(cid:str):

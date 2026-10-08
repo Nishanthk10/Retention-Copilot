@@ -9,7 +9,7 @@ def build_graph(runtime):
     async def context(s):
         summary=runtime.summary_store.get_latest(s['call_id'],max_turn=s['turn_no'])
         runtime.audit.write(s['call_id'],s['turn_no'],'context_assembly',summary_frontier=summary['last_summarised_turn'])
-        return {'summary':summary,'context':assemble_context(s['turns'],summary)}
+        return {'summary':summary,'context':assemble_context(s['turns'],summary,runtime.calls[s['call_id']]['displayed'])}
     async def fast_lane(s):
         if runtime.settings.features['fastlane']:
             tip=await asyncio.to_thread(runtime.fastlane.suggest,s['turns'][-1]['text'])

@@ -1,7 +1,7 @@
 import {replayAudio,wait} from './replay.js';
 const $=id=>document.getElementById(id);
 let callId=null,audio=null,events=null,role='none',media=null,context=null,processor=null;
-let suggestions=[],lastBeat=Date.now(),started=0,replaying=false,ending=false,connecting=false,reconnectTimer=null,abortReplay=null,scenarios=[],seenTurns=new Set(),active=true;
+let suggestions=[],lastBeat=Date.now(),started=0,replaying=false,ending=false,callOver=false,connecting=false,reconnectTimer=null,abortReplay=null,scenarios=[],seenTurns=new Set(),active=true;
 const base=(location.protocol==='https:'?'wss://':'ws://')+location.host;
 const text=(id,value)=>$(id).textContent=value;
 function banner(message){text('banner-text',message);$('banner').hidden=!message;}
@@ -37,7 +37,7 @@ function renderSuggestions(){
 }
 function ended(data){
   if(!callId)return;
-  ending=true;abortReplay?.abort();role='none';stopMic();clearTimeout(reconnectTimer);
+  ending=true;callOver=true;abortReplay?.abort();role='none';stopMic();clearTimeout(reconnectTimer);
   audio?.close();events?.close();text('connection','Ended');text('save-state',data.log_saved?'Log saved':'Log could not be saved');
   text('ended-id',callId);$('open-log').href='/logs/'+callId;$('open-log').hidden=!data.log_saved;
   if(!$('ended').open)$('ended').showModal();controls();localStorage.removeItem('retention-call');
@@ -124,6 +124,8 @@ async function endCall(){
   catch(e){ending=false;banner('Could not end the call. Retry when the connection returns.');text('save-state','Call could not be ended');controls();}
 }
 $('end').onclick=endCall;
+// G-17: while a call is in progress (live, reconnecting or replaying), keep this tab on the call.
+$('see-logs').onclick=()=>{if(callId&&!callOver)window.open('/logs','_blank','noopener');else location.href='/logs';};
 $('new').onclick=()=>{if(!ending&&callId){$('ended').close();return;}location.reload();};
 $('retry').onclick=async()=>{clearTimeout(reconnectTimer);reconnectTimer=null;if(callId)await connect(true).catch(()=>banner('Connection unavailable. Handle the call or call the customer back later.'));else start();};
 $('scenario').onchange=controls;

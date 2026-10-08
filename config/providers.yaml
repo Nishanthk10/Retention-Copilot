@@ -5,14 +5,14 @@
 # rejected at startup.
 offer_agent:
   - groq:openai/gpt-oss-120b
-  - groq:qwen/qwen3.8-27b
   - groq:openai/gpt-oss-20b
+  - groq:qwen/qwen3.8-27b
   - ollama:${OLLAMA_MODEL}
   - gemini:${GEMINI_MODEL}
 behaviour_agent:
   - groq:openai/gpt-oss-120b
-  - groq:qwen/qwen3.8-27b
   - groq:openai/gpt-oss-20b
+  - groq:qwen/qwen3.8-27b
   - ollama:${OLLAMA_MODEL}
   - gemini:${GEMINI_MODEL}
 summariser:
