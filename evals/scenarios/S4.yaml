@@ -1,0 +1,31 @@
+id: S4
+title: The competing plan
+primary_reason: competitor
+turns:
+- turn_no: 1
+  speaker: rep
+  text: What would you like to discuss?
+- turn_no: 2
+  speaker: customer
+  text: A competitor has a cheaper plan.
+- turn_no: 3
+  speaker: rep
+  text: What features matter to you?
+- turn_no: 4
+  speaker: customer
+  text: Coverage and support are important.
+- turn_no: 5
+  speaker: rep
+  text: Let us compare those details.
+- turn_no: 6
+  speaker: customer
+  text: Okay, let us do that.
+labels:
+  trigger_turn: 2
+  decision_turn: 2
+  expected_offer_id: OFF-COMP-01
+  behaviour:
+    '2':
+    - info
+    '6':
+    - close

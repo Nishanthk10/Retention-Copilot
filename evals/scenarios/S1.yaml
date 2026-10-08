@@ -1,0 +1,31 @@
+id: S1
+title: The price conversation
+primary_reason: price
+turns:
+- turn_no: 1
+  speaker: rep
+  text: Hello, what can I help with?
+- turn_no: 2
+  speaker: customer
+  text: It is too expensive. I want to cancel.
+- turn_no: 3
+  speaker: rep
+  text: How long have you been with us?
+- turn_no: 4
+  speaker: customer
+  text: Seven months. I need a lower price.
+- turn_no: 5
+  speaker: rep
+  text: Let us look at the loyalty option.
+- turn_no: 6
+  speaker: customer
+  text: That sounds good.
+labels:
+  trigger_turn: 2
+  decision_turn: 4
+  expected_offer_id: OFF-PRICE-01
+  behaviour:
+    '2':
+    - info
+    '6':
+    - close

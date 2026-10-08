@@ -1,0 +1,31 @@
+id: S3
+title: Finding the value
+primary_reason: not_using
+turns:
+- turn_no: 1
+  speaker: rep
+  text: What brings you in today?
+- turn_no: 2
+  speaker: customer
+  text: I never use this service. Please cancel it.
+- turn_no: 3
+  speaker: rep
+  text: What would make it useful?
+- turn_no: 4
+  speaker: customer
+  text: I need help setting it up for my work.
+- turn_no: 5
+  speaker: rep
+  text: We can review the relevant features.
+- turn_no: 6
+  speaker: customer
+  text: That would help.
+labels:
+  trigger_turn: 2
+  decision_turn: 2
+  expected_offer_id: OFF-USAGE-01
+  behaviour:
+    '2':
+    - info
+    '6':
+    - close

@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "retention-guarded-summariser"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = ["pydantic>=2.10,<3", "jsonschema>=4.23,<5", "PyYAML>=6,<7"]
+[tool.setuptools]
+packages = ["summariser"]
+package-dir = {"summariser" = "."}
+[tool.setuptools.package-data]
+summariser = ["config.yaml", "README.md"]

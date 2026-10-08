@@ -1,0 +1,139 @@
+schema:
+  type: object
+  properties:
+    last_summarised_turn: &id002
+      type: integer
+      minimum: 0
+    primary_reason: &id001
+      type: string
+      enum:
+      - unknown
+      - price
+      - moving
+      - not_using
+      - competitor
+      - service_issue
+    all_reasons:
+      type: array
+      items:
+        type: object
+        properties:
+          reason: *id001
+          first_turn: *id002
+        required:
+        - reason
+        - first_turn
+        additionalProperties: false
+      maxItems: 30
+    call_stage:
+      type: string
+      enum:
+      - opening
+      - discovery
+      - negotiation
+      - closing
+      - ended
+    customer_tenure:
+      type: object
+      properties:
+        months:
+          type:
+          - integer
+          - 'null'
+          minimum: 0
+        turn_stated:
+          type:
+          - integer
+          - 'null'
+          minimum: 1
+      required:
+      - months
+      - turn_stated
+      additionalProperties: false
+    mood:
+      type: string
+      enum:
+      - unknown
+      - calm
+      - neutral
+      - frustrated
+      - angry
+      - positive
+    mood_trend:
+      type: string
+      enum:
+      - unknown
+      - improving
+      - stable
+      - worsening
+    offers_discussed:
+      type: array
+      items:
+        type: object
+        properties:
+          offer_id:
+            type: string
+          turn: *id002
+          response:
+            type: string
+            enum:
+            - unknown
+            - proposed
+            - accepted
+            - declined
+        required:
+        - offer_id
+        - turn
+        - response
+        additionalProperties: false
+      maxItems: 30
+    customer_requests:
+      type: array
+      items:
+        type: object
+        properties:
+          reported_speech:
+            type: string
+            maxLength: 250
+            x-max-words: 25
+          turn: *id002
+          in_kb:
+            type: boolean
+        required:
+        - reported_speech
+        - turn
+        - in_kb
+        additionalProperties: false
+      maxItems: 30
+    objections:
+      type: array
+      items:
+        type: string
+        maxLength: 160
+        x-max-words: 15
+      maxItems: 30
+  required:
+  - last_summarised_turn
+  - primary_reason
+  - all_reasons
+  - call_stage
+  - customer_tenure
+  - mood
+  - mood_trend
+  - offers_discussed
+  - customer_requests
+  - objections
+  additionalProperties: false
+default:
+  last_summarised_turn: 0
+  primary_reason: unknown
+  all_reasons: []
+  call_stage: opening
+  customer_tenure:
+    months: null
+    turn_stated: null
+  mood: unknown
+  mood_trend: unknown
+  offers_discussed: []
+  customer_requests: []
+  objections: []

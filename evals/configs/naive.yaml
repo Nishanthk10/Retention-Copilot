@@ -1,0 +1,7 @@
+fastlane: false
+guardrails: false
+naive: true
+permission: false
+pii_masking: true
+retries: false
+summariser: false

@@ -1,0 +1,52 @@
+threshold: 0.62
+tips:
+- type: calm
+  keywords:
+  - angry
+  - ridiculous
+  - frustrated
+  - unacceptable
+  example: I am furious about this service.
+  text: Acknowledge the frustration. Let the customer finish before asking one clear
+    question.
+- type: info
+  keywords:
+  - expensive
+  - price
+  - cost
+  - afford
+  example: This plan costs too much.
+  text: Ask what feels hardest to justify, and how long they have been a customer.
+- type: rapport
+  keywords:
+  - moving
+  - relocating
+  example: I am moving house.
+  text: Ask about the move and what they need at the new location.
+- type: info
+  keywords:
+  - not using
+  - never use
+  - barely use
+  example: I barely use this service.
+  text: Ask which features they use today and what would make the service useful.
+- type: info
+  keywords:
+  - competitor
+  - cheaper elsewhere
+  example: A competitor has a cheaper plan.
+  text: Ask which competing plan they are considering so you can compare the details.
+- type: calm
+  keywords:
+  - outage
+  - broken
+  - keeps dropping
+  example: The service keeps dropping.
+  text: Acknowledge the disruption and ask when the problem started.
+- type: close
+  keywords:
+  - sounds good
+  - that works
+  example: That sounds good to me.
+  text: Check whether this addresses their main concern before moving to the next
+    step.

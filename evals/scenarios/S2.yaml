@@ -1,0 +1,31 @@
+id: S2
+title: A new address
+primary_reason: moving
+turns:
+- turn_no: 1
+  speaker: rep
+  text: How can I help today?
+- turn_no: 2
+  speaker: customer
+  text: I am moving to a new home next month.
+- turn_no: 3
+  speaker: rep
+  text: Do you want to keep the service at your new address?
+- turn_no: 4
+  speaker: customer
+  text: Yes, if it works there.
+- turn_no: 5
+  speaker: rep
+  text: We can check coverage.
+- turn_no: 6
+  speaker: customer
+  text: Thank you.
+labels:
+  trigger_turn: 2
+  decision_turn: 2
+  expected_offer_id: OFF-MOVE-01
+  behaviour:
+    '2':
+    - info
+    '6':
+    - close

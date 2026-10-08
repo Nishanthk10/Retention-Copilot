@@ -1,0 +1,23 @@
+# Ordered model chain per role (DEC-07, Task 5.1). The first entry is the role's primary model;
+# change it here, no code change needed. All Groq models come first, then Ollama, then Gemini.
+# Entry format is provider:model. Only ${OLLAMA_MODEL} and ${GEMINI_MODEL} are substituted.
+# Chat models only: meta-llama/llama-prompt-guard-2-* and openai/gpt-oss-safeguard-20b are
+# rejected at startup.
+offer_agent:
+  - groq:openai/gpt-oss-120b
+  - groq:qwen/qwen3.8-27b
+  - groq:openai/gpt-oss-20b
+  - ollama:${OLLAMA_MODEL}
+  - gemini:${GEMINI_MODEL}
+behaviour_agent:
+  - groq:openai/gpt-oss-120b
+  - groq:qwen/qwen3.8-27b
+  - groq:openai/gpt-oss-20b
+  - ollama:${OLLAMA_MODEL}
+  - gemini:${GEMINI_MODEL}
+summariser:
+  - groq:openai/gpt-oss-20b
+  - groq:qwen/qwen3.8-27b
+  - groq:openai/gpt-oss-120b
+  - ollama:${OLLAMA_MODEL}
+  - gemini:${GEMINI_MODEL}
