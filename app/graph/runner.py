@@ -18,9 +18,13 @@ class Runtime:
         self.db.commit()
         self.summary_store=SummaryStore(settings.data_dir/'summaries.db',kb.offers,settings.features['guardrails'])
         self.prompt_guard=PromptGuard(settings,audit) if settings.prompt_guard else None
-        self.summariser=BackgroundSummariser(self.summary_store,kb.offers,self.summarise_call,audit.write,self.publish,settings.features['guardrails'],self.prompt_guard.classify if self.prompt_guard else None)
+        self.summariser=BackgroundSummariser(self.summary_store,kb.offers,self.summarise_call,audit.write,self.publish,settings.features['guardrails'],self.classifier_flags if self.prompt_guard else None)
         self.permission=PermissionLayer(kb,audit); self.agents=Agents(router,kb,audit); self.fastlane=FastLane(kb)
         self.graph=build_graph(self); self.checkpoints=build_checkpoint_graph(saver)
+    async def classifier_flags(self,cid,no,text):
+        # Summariser L2 takes a list of flags; status and score are in Prompt Guard's audit record.
+        result=await self.prompt_guard.classify(cid,no,text)
+        return ['classifier_flag'] if result['flagged'] else []
     async def summarise_call(self,cid,no,messages,schema):
         result=await self.router.complete(messages,'summariser',None,response_format=json_schema_format(schema),call_id=cid,turn_no=no)
         return json.loads(result['text'])

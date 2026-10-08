@@ -20,10 +20,12 @@ class Settings:
     test_mode: bool = field(default_factory=lambda: flag('TEST_MODE'))
     offline: bool = field(default_factory=lambda: flag('MODEL_OFFLINE'))
     prompt_guard: bool = field(default_factory=lambda: flag('PROMPT_GUARD_ENABLED'))
+    prompt_guard_threshold: float = field(default_factory=lambda: float(os.getenv('PROMPT_GUARD_THRESHOLD', '0.5')))
     eval_mode: bool = field(default_factory=lambda: flag('EVAL_MODE'))
     variant: str = field(default_factory=lambda: os.getenv('EVAL_CONFIG', 'full'))
     only_provider: str = field(default_factory=lambda: os.getenv('MODEL_PROVIDER', ''))
     def __post_init__(self):
+        if not 0 <= self.prompt_guard_threshold <= 1: raise ValueError('PROMPT_GUARD_THRESHOLD must be between 0 and 1')
         if self.variant not in {'full','naive','no_permission','no_summariser_guardrails','no_retries'}:
             raise ValueError('Unknown evaluation variant')
         if self.variant != 'full' and not self.eval_mode:
