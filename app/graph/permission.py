@@ -4,16 +4,51 @@ from app.masking import mask_pii
 
 COMMERCIAL=re.compile(r'[$£€₹%]|\b(?:\d+|one|two|three|ten|twenty|hundred)\s*(?:percent|dollars?|rupees?|pounds?)\b|\b(?:offer|off|discount|waiv\w*|refund\w*|credit|free|complimentary|guarantee\w*|promise\w*|price|saving\w*|cheaper|match|pay|payment|rate|fee|cost|compensat\w*|reimburse\w*)\b|\b(?:we|I|you)\s+(?:will|can)\s+(?:give|provide|reduce|fix|resolve|apply|cancel|upgrade|extend)\b',re.I)
 
+# Deterministic tenure parsing over raw customer speech. Never reads the LLM summary: a poisoned
+# summary must not unlock tenure-gated offers. A false positive unlocks an offer, so ambiguous or
+# promotional durations are rejected; a miss only denies (fail closed).
+WORDS={'a':1,'an':1,'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'nine':9,'ten':10,'eleven':11,'twelve':12,
+       'thirteen':13,'fourteen':14,'fifteen':15,'sixteen':16,'seventeen':17,'eighteen':18,'nineteen':19,'twenty':20}
+DURATION=re.compile(r"\b(?:(?P<half_year>half an? year)|(?P<num>\d{1,3}(?:\.\d+)?|"+'|'.join(sorted(WORDS,key=len,reverse=True))+
+    r")(?P<half_before> and an? half)?[\s-]*(?P<unit>months?|mos?|years?|yrs?)\b(?P<half_after> and an? half)?)")
+# Within ~30 characters before the duration, in the same sentence.
+CUE=re.compile(r"\b(?:tenure|customer|member|with (?:you|us|the company|your company|them)|been|joined|signed up|subscribed|started|for)\b[^.!?]{0,30}$")
+START=re.compile(r"^\W*(?:about|around|roughly|approximately|maybe|over|more than|at least|just over)?\s*$")
+UPPER_BOUND=re.compile(r"\b(?:less than|under|almost|nearly|not even|not quite|barely|just under)\s*$")
+FUTURE_OR_RATE=re.compile(r"\b(?:in|within|next|after|another|every|per|each)\s*$")
+PROMO_BEFORE=re.compile(r"(?:%|\b(?:off|discount|free|deal|offer|promo|price|bill|pay|paying|cheaper|credit|refund)\b)[^.!?]{0,25}$")
+PROMO_AFTER=re.compile(r"^\s*(?:free|off|discount|trial|contract|promo|notice|at\b|of free)")
+START_VERB=re.compile(r"\b(?:joined|signed up|started|subscribed|switched|became|moved to you)\b")
+ASKED=re.compile(r"tenure|how long|how many (?:months|years)|been (?:with|a customer)|when did you (?:join|sign up|start)")
+HYPOTHETICAL=re.compile(r'ignore|system message|pretend|suppose|what if')
+
+def durations(text,answering):
+    """Tenure values (months, floored) stated in one customer turn."""
+    found=[]
+    for m in DURATION.finditer(text):
+        before,after=text[:m.start()],text[m.end():]
+        if UPPER_BOUND.search(before) or FUTURE_OR_RATE.search(before) or PROMO_BEFORE.search(before) or PROMO_AFTER.search(after): continue
+        if after.lstrip().startswith('ago') and not START_VERB.search(before): continue
+        if not (answering or CUE.search(before) or START.match(before)): continue
+        if m.group('half_year'): value=6.0
+        else:
+            raw=m.group('num'); value=float(raw) if raw[0].isdigit() else float(WORDS[raw])
+            if m.group('half_before') or m.group('half_after'): value+=0.5
+            if m.group('unit').startswith('y'): value*=12
+        found.append(int(value))
+    return found
+
 def stated_tenure(turns):
-    words={'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'nine':9,'ten':10,'eleven':11,'twelve':12}
-    for turn in reversed(turns):
+    """Most recent customer statement of tenure in months, or None. Conflicting values in one turn
+    resolve to the smallest (conservative)."""
+    for index in range(len(turns)-1,-1,-1):
+        turn=turns[index]
         if turn['speaker']!='customer': continue
         text=turn['text'].lower()
-        if re.search(r'ignore|system message|pretend|suppose|what if',text): continue
-        m=re.search(r"(?:^|been.{0,25}|customer.{0,20}|for\s+)(\d{1,3}|"+'|'.join(words)+r")\s+(months?|years?)\b",text)
-        if m:
-            raw=m.group(1); value=int(raw) if raw.isdigit() else words[raw]
-            return value*(12 if m.group(2).startswith('year') else 1)
+        if HYPOTHETICAL.search(text): continue
+        rep=next((t['text'].lower() for t in reversed(turns[:index]) if t['speaker']=='rep'),'')
+        found=durations(text,bool(ASKED.search(rep)))
+        if found: return min(found)
     return None
 
 class PermissionLayer:
