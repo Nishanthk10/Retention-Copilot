@@ -1,0 +1,19 @@
+# Fixed Task 5.1 chain for router behaviour tests, independent of edits to config/providers.yaml.
+offer_agent:
+  - groq:openai/gpt-oss-120b
+  - groq:qwen/qwen3.8-27b
+  - groq:openai/gpt-oss-20b
+  - ollama:${OLLAMA_MODEL}
+  - gemini:${GEMINI_MODEL}
+behaviour_agent:
+  - groq:openai/gpt-oss-120b
+  - groq:qwen/qwen3.8-27b
+  - groq:openai/gpt-oss-20b
+  - ollama:${OLLAMA_MODEL}
+  - gemini:${GEMINI_MODEL}
+summariser:
+  - groq:openai/gpt-oss-20b
+  - groq:qwen/qwen3.8-27b
+  - groq:openai/gpt-oss-120b
+  - ollama:${OLLAMA_MODEL}
+  - gemini:${GEMINI_MODEL}

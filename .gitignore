@@ -3,7 +3,7 @@
 __pycache__/
 .pytest_cache/
 node_modules/
-logs/
+/logs/
 data/
 *.db*
 evals/reports/
